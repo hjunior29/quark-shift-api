@@ -11,7 +11,7 @@ use std::{env, time::Duration};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
 
-use crate::handlers::{ping_handler, redirect_handler, shorten_handler};
+use crate::handlers::{home, ping, redirect, shorten};
 
 pub fn create_routes(db: DatabaseConnection) -> Router {
     let origin = env::var("ORIGIN_URL").expect("ORIGIN_URL must be set");
@@ -46,9 +46,10 @@ pub fn create_routes(db: DatabaseConnection) -> Router {
         );
 
     Router::new()
-        .route("/shorten", post(shorten_handler))
-        .route("/{code}", get(redirect_handler))
-        .route("/ping", get(ping_handler))
+        .route("/", get(home))
+        .route("/shorten", post(shorten))
+        .route("/{code}", get(redirect))
+        .route("/ping", get(ping))
         .with_state(db)
         .layer(cors)
         .layer(trace)

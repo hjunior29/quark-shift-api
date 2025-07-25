@@ -4,6 +4,7 @@ use axum::{
     response::{IntoResponse, Redirect},
 };
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
+use serde_json::json;
 use uuid::Uuid;
 
 use crate::models::Column;
@@ -20,7 +21,21 @@ pub struct ShortenResponse {
     pub shortened_url: String,
 }
 
-pub async fn shorten_handler(
+pub async fn home() -> impl IntoResponse {
+    let data = json!({
+        "name": "Quark Shift URL Shortener",
+        "description": "A simple URL shortener service",
+        "author": "github.com/hjunior29"
+    });
+
+    ApiResponse::new(
+        StatusCode::OK,
+        "API from Quark Shift Project".to_string(),
+        data,
+    )
+}
+
+pub async fn shorten(
     State(db): State<DatabaseConnection>,
     Json(payload): Json<ShortenRequest>,
 ) -> impl IntoResponse {
@@ -53,10 +68,7 @@ pub async fn shorten_handler(
     )
 }
 
-pub async fn redirect_handler(
-    State(db): State<DatabaseConnection>,
-    Path(code): Path<String>,
-) -> Redirect {
+pub async fn redirect(State(db): State<DatabaseConnection>, Path(code): Path<String>) -> Redirect {
     if let Ok(Some(mut url)) = Urls::find().filter(Column::Code.eq(code)).one(&db).await {
         url.count += 1;
         let mut active_model: ActiveModel = url.clone().into();
@@ -65,13 +77,13 @@ pub async fn redirect_handler(
         tokio::spawn(async move {
             let _ = active_model.update(&db).await;
         });
-        
+
         Redirect::permanent(&url.url)
     } else {
         Redirect::permanent("https://google.com")
     }
 }
 
-pub async fn ping_handler() -> impl IntoResponse {
+pub async fn ping() -> impl IntoResponse {
     ApiResponse::new(StatusCode::OK, "pong".to_string(), empty_data())
 }
