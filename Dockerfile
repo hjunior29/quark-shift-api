@@ -1,20 +1,19 @@
-FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
+# Etapa de build
+FROM clux/muslrust:stable AS builder
+
 WORKDIR /app
 
-FROM chef AS planner
+# Copia tudo para o container
 COPY . .
-RUN cargo chef prepare --recipe-path recipe.json
 
-FROM chef AS builder
-COPY --from=planner /app/recipe.json recipe.json
-# Build dependencies - this is the caching Docker layer!
-RUN cargo chef cook --release --recipe-path recipe.json
-# Build application
-COPY . .
-RUN cargo build --release --bin quark-shift-api
+# Compila com target estático
+RUN cargo build --release --target=x86_64-unknown-linux-musl
 
-# We do not need the Rust toolchain to run the binary!
-FROM debian:bookworm-slim AS runtime
-WORKDIR /app
-COPY --from=builder /app/target/release/quark-shift-api /usr/local/bin
-ENTRYPOINT ["/usr/local/bin/quark-shift-api"]
+# Etapa de runtime (mínima possível)
+FROM scratch
+
+# Copia o binário estático para o container final
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/quark-shift-api /quark-shift-api
+
+# Define ponto de entrada
+ENTRYPOINT ["/quark-shift-api"]
