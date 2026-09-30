@@ -9,8 +9,10 @@ COPY . .
 # Compile with static target
 RUN cargo build --release --target=x86_64-unknown-linux-musl
 
-# Runtime stage (minimal possible)
-FROM scratch
+# Runtime stage
+FROM alpine:3.20
+
+RUN apk add --no-cache sqlite ca-certificates
 
 # Copy static binary to final container
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/quark-shift-api /quark-shift-api

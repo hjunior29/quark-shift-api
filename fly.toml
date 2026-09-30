@@ -9,7 +9,12 @@ primary_region = 'gru'
 [build]
 
 [env]
+  DATABASE_URL = 'sqlite:///data/quark.db?mode=rwc'
   PORT = '8080'
+
+[mounts]
+  source = 'quark_shift_api_data'
+  destination = '/data'
 
 [http_service]
   internal_port = 3000
@@ -21,3 +26,4 @@ primary_region = 'gru'
 
 [[vm]]
   size = 'shared-cpu-1x'
+  memory = '256'
